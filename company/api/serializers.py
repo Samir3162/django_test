@@ -48,9 +48,14 @@ class OfficeDetailSerializer(serializers.ModelSerializer):
     '''
 
     company = serializers.SerializerMethodField()
+    monthly_rent_sum = serializers.SerializerMethodField()
 
     def get_company(self, obj):
         return obj.company.name
+
+    def get_monthly_rent_sum(self, obj):
+        rents = Office.objects.filter(company=obj.company).values_list('monthly_rent', flat=True)
+        return sum(rents)
 
     class Meta:
         model = Office
