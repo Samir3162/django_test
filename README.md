@@ -17,6 +17,7 @@
 	- A company should at all times have exactly one headquarter
 
 		a. How do you test it?
+
 		solution: To test this I will create a company object and then create multiple offices for a company and test this via test cases. 
 
 2. Please add an API with the help of django-rest-framework.
@@ -27,4 +28,5 @@
 	- Write an API endpoint to change the headquarter of the company
 
 		a. How would you test the functionality?
+
 		solution: To test api functionality I can write unit test cases, where I perpare all possible scenarios for an API such as test API for 200 success response, for 201 object created success response, for 400 error response or 404 error response etc.  
