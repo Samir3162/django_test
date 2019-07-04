@@ -47,8 +47,12 @@ class OfficeDetailSerializer(serializers.ModelSerializer):
         Get office detail of company headquater serializer
     '''
 
+    id = serializers.SerializerMethodField()
     company = serializers.SerializerMethodField()
     monthly_rent_sum = serializers.SerializerMethodField()
+
+    def get_id(self, obj):
+        return obj.company.id
 
     def get_company(self, obj):
         return obj.company.name
