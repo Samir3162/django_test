@@ -35,6 +35,14 @@ class CompanyView(CreateAPIView):
             return Response({'status': True, 'data': message}, 
                 status=status.HTTP_400_BAD_REQUEST)
 
+    def get(self, request, format=None):
+
+        companies = Company.objects.all()
+        offices = Office.objects.filter(company__in=companies, headquater=True)
+        serializer = OfficeDetailSerializer(offices, many=True)
+        return Response({'status': True, 'data': serializer.data}, 
+            status=status.HTTP_200_OK)
+
 
 class OfficeView(CreateAPIView):
     '''
@@ -72,22 +80,6 @@ class OfficeListView(ListAPIView):
 
         company = get_object_or_404(Company, pk=pk)
         offices = Office.objects.filter(company=company)
-        serializer = self.serializer_class(offices, many=True)
-        return Response({'status': True, 'data': serializer.data}, 
-            status=status.HTTP_200_OK)
-
-
-class CompanyListView(ListAPIView):
-    '''
-        API view to get all the companies
-    '''
-
-    serializer_class = OfficeDetailSerializer
-
-    def get(self, request, format=None):
-
-        companies = Company.objects.all()
-        offices = Office.objects.filter(company__in=companies, headquater=True)
         serializer = self.serializer_class(offices, many=True)
         return Response({'status': True, 'data': serializer.data}, 
             status=status.HTTP_200_OK)
