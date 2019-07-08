@@ -8,12 +8,13 @@ from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView
 
 # local imports
 from company.models import Company, Office
-from company.api.serializers import CompanySerializer, OfficeSerializer, OfficeDetailSerializer, ChangeCompanyHeadquaterSerializer
+from company.api.serializers import CompanySerializer, OfficeSerializer, CompanyListSerializer, ChangeCompanyHeadquaterSerializer
 
 
 class CompanyView(CreateAPIView):
     '''
-        API view to create company with office information
+        API POST view to create company with office information and 
+        GET view to all companies in the DB with headquater office information
     '''
 
     serializer_class = CompanySerializer
@@ -22,24 +23,16 @@ class CompanyView(CreateAPIView):
 
         serializer = self.serializer_class(data=request.data,
                 context={'request': request})
-        if serializer.is_valid():
-            company_id = serializer.save()
-            return Response({'status': True, 'data': {'company_id': company_id}}, 
-                status=status.HTTP_201_CREATED)
-        else:
-            message = ''
-            for error in serializer.errors:
-                err = error +": "+ serializer.errors[error][0]
-                message += err
-                message += " "
-            return Response({'status': True, 'data': message}, 
-                status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        company_id = serializer.save()
+        return Response({'status': True, 'data': {'company_id': company_id}}, 
+            status=status.HTTP_201_CREATED)
+
 
     def get(self, request, format=None):
 
         companies = Company.objects.all()
-        offices = Office.objects.filter(company__in=companies, headquater=True)
-        serializer = OfficeDetailSerializer(offices, many=True)
+        serializer = CompanyListSerializer(companies, many=True)
         return Response({'status': True, 'data': serializer.data}, 
             status=status.HTTP_200_OK)
 
@@ -55,34 +48,10 @@ class OfficeView(CreateAPIView):
 
         serializer = self.serializer_class(data=request.data,
                 context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'status': True, 'data': serializer.data}, 
-                status=status.HTTP_201_CREATED)
-        else:
-            message = ''
-            for error in serializer.errors:
-                err = error +": "+ serializer.errors[error][0]
-                message += err
-                message += " "
-            return Response({'status': True, 'data': message}, 
-                status=status.HTTP_400_BAD_REQUEST)
-
-
-class OfficeListView(ListAPIView):
-    '''
-        API view to get all the offices for a company
-    '''
-
-    serializer_class = OfficeSerializer
-
-    def get(self, request, pk, format=None):
-
-        company = get_object_or_404(Company, pk=pk)
-        offices = Office.objects.filter(company=company)
-        serializer = self.serializer_class(offices, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response({'status': True, 'data': serializer.data}, 
-            status=status.HTTP_200_OK)
+            status=status.HTTP_201_CREATED)
 
 
 class ChangeCompanyHeadquaterView(UpdateAPIView):
@@ -97,15 +66,7 @@ class ChangeCompanyHeadquaterView(UpdateAPIView):
         company = get_object_or_404(Company, pk=cmp_id)
         office = get_object_or_404(Office, pk=office_id)
         serializer = self.serializer_class(office, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'status': True, 'data': 'Successfully Updated'},
-                status=status.HTTP_200_OK)
-        else:
-            message = ''
-            for error in serializer.errors:
-                err = error +": "+ serializer.errors[error][0]
-                message += err
-                message += " "
-            return Response({'status': True, 'data': message}, 
-                status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'status': True, 'data': 'Successfully Updated'},
+            status=status.HTTP_200_OK)

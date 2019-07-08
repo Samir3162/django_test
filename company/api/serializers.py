@@ -1,3 +1,6 @@
+#  django imports
+from django.db.models import Sum
+
 # rest-framework imports
 from rest_framework import serializers
 
@@ -33,37 +36,24 @@ class OfficeSerializer(serializers.ModelSerializer):
     '''
         Create office and list offices serializer
     '''
-
-    def create(self, validated_data):
-        return Office.objects.create(**validated_data)
-
-    class Meta:
-        model = Office
-        fields = '__all__'
-
-
-class OfficeDetailSerializer(serializers.ModelSerializer):
-    '''
-        Get office detail of company headquater serializer
-    '''
-
-    id = serializers.SerializerMethodField()
-    company = serializers.SerializerMethodField()
     monthly_rent_sum = serializers.SerializerMethodField()
 
-    def get_id(self, obj):
-        return obj.company.id
-
-    def get_company(self, obj):
-        return obj.company.name
-
     def get_monthly_rent_sum(self, obj):
-        rents = Office.objects.filter(company=obj.company).values_list('monthly_rent', flat=True)
-        return sum(rents)
+        rents = Office.objects.filter(company=obj.company).aggregate(Sum('monthly_rent'))
+        return rents['monthly_rent__sum']
 
     class Meta:
         model = Office
         fields = '__all__'
+
+
+class CompanyListSerializer(serializers.ModelSerializer):
+
+    offices = OfficeSerializer(source='company_office', many=True)
+
+    class Meta:
+        model = Company
+        fields = ['id', 'name', 'offices']
 
 
 class ChangeCompanyHeadquaterSerializer(serializers.ModelSerializer):
@@ -73,9 +63,8 @@ class ChangeCompanyHeadquaterSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
 
-        office = Office.objects.get(company=instance.company, headquater=True)
-        office.headquater = False
-        office.save()
+        office = Office.objects.filter(company=instance.company, headquater=True)
+        office.update(headquater = False)
         instance.headquater = validated_data.get('headquater', instance.headquater)
         instance.save()
         return instance
